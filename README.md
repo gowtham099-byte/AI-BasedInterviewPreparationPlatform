@@ -1,16 +1,36 @@
-# React + Vite
+# AI-Based Interview Preparation Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This repository contains a Vite + React frontend and a TypeScript + Express backend for an AI-based interview preparation platform.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Clone the repo
+   - git clone https://github.com/gowtham099-byte/AI-BasedInterviewPreparationPlatform.git
+   - cd AI-BasedInterviewPreparationPlatform
 
-## React Compiler
+2. Install dependencies and run both servers (frontend + backend):
+   - npm install
+   - npm run dev:all
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3. Or run separately:
+   - Frontend only: npm run dev (then open http://localhost:5173)
+   - Backend only:
+     - cd ai-interview-backend
+     - npm install
+     - npm run dev (runs ts-node-dev)
+     - Backend will run on http://localhost:4000 by default
 
-## Expanding the Oxlint configuration
+## API Endpoints (development)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project
+- GET /health
+  - Returns { "status": "ok" }
+- GET /api/interviews/questions
+  - Returns a JSON object: { "questions": [ { id, questionText, ... }, ... ] }
+- POST /api/interviews/answer
+  - Accepts { questionId, answer } and returns feedback.
+
+## Notes
+
+- The backend currently uses simple file-based persistence (ai-interview-backend/data/answers.json) to store submitted answers. This is intended for development and demo purposes only.
+- The AI analysis service is a placeholder with simple heuristics; you can replace it with a real AI integration later.
+
