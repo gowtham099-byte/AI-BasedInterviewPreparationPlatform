@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import axios from 'axios'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
@@ -7,12 +8,23 @@ import './App.css'
 function App() {
   const [count, setCount] = useState(0)
   const [backendMessage, setBackendMessage] = useState('Loading backend...')
+  const [questions, setQuestions] = useState([])
+  const [selectedQuestionId, setSelectedQuestionId] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [status, setStatus] = useState('')
 
   useEffect(() => {
-    fetch('/api/interviews/questions')
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.message) {
+    let mounted = true
+    axios
+      .get('/api/interviews/questions')
+      .then((res) => {
+        const data = res.data
+        if (!mounted) return
+        if (Array.isArray(data.questions) && data.questions.length > 0) {
+          setQuestions(data.questions)
+          setBackendMessage('Questions loaded')
+          setSelectedQuestionId(String(data.questions[0].id || ''))
+        } else if (data.message) {
           setBackendMessage(data.message)
         } else {
           setBackendMessage('Backend responded successfully.')
@@ -21,118 +33,108 @@ function App() {
       .catch(() => {
         setBackendMessage('Unable to reach backend.')
       })
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setStatus('Submitting...')
+    try {
+      const payload = { questionId: selectedQuestionId, answer }
+      const res = await axios.post('/api/interviews/answer', payload)
+      if (res.status === 201 || res.status === 200) {
+        setStatus('Answer submitted successfully.')
+        setAnswer('')
+      } else {
+        setStatus('Submission completed with status: ' + res.status)
+      }
+    } catch (err) {
+      console.error(err)
+      setStatus('Failed to submit answer.')
+    }
+  }
+
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app-root">
+      <header className="app-header">
+        <div className="logo-row">
+          <img src={reactLogo} alt="React" className="small-logo" />
+          <h1>AI Interview Prep</h1>
+          <img src={viteLogo} alt="Vite" className="small-logo" />
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-          <p className="backend-status">Backend status: {backendMessage}</p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        <p className="subtitle">Practice questions, get feedback, improve your skills.</p>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="container">
+        <section className="left">
+          <div className="hero-card">
+            <img src={heroImg} alt="hero" className="hero-img" />
+            <div>
+              <h2>Get started</h2>
+              <p>Edit <code>src/App.jsx</code> and save to test HMR</p>
+              <p className="backend-status">Backend: {backendMessage}</p>
+              <button className="counter" onClick={() => setCount((c) => c + 1)}>
+                Count is {count}
+              </button>
+            </div>
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <div className="questions-list">
+            <h3>Available Questions</h3>
+            {questions.length > 0 ? (
+              <ul>
+                {questions.map((q) => (
+                  <li key={q.id}>
+                    <strong>{q.id}.</strong> {q.questionText}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">No questions available. {backendMessage}</p>
+            )}
+          </div>
+        </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        <aside className="right">
+          <h3>Answer a question</h3>
+          <form onSubmit={handleSubmit} className="answer-form">
+            <label>
+              Question
+              <select value={selectedQuestionId} onChange={(e) => setSelectedQuestionId(e.target.value)}>
+                <option value="">-- Select --</option>
+                {questions.map((q) => (
+                  <option key={q.id} value={q.id}>{q.id}: {q.questionText.substring(0, 60)}...</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Your Answer
+              <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} rows={6} />
+            </label>
+
+            <div className="form-actions">
+              <button type="submit" className="primary">Submit Answer</button>
+              <button type="button" onClick={() => { setAnswer(''); setStatus('') }} className="secondary">Clear</button>
+            </div>
+
+            {status && <p className="status">{status}</p>}
+          </form>
+
+          <div className="links">
+            <a href="https://react.dev/" target="_blank">Learn React</a>
+            <a href="https://vite.dev/" target="_blank">Vite Docs</a>
+          </div>
+        </aside>
+      </main>
+
+      <footer className="app-footer">
+        <p>AI Interview Preparation Platform</p>
+      </footer>
+    </div>
   )
 }
 
