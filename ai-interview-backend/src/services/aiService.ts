@@ -2,7 +2,7 @@ export class AIService {
     // Accept either an array or a single answer; keep placeholder logic but return a tailored feedback string
     async generateQuestions(topic: string, difficulty: string): Promise<string[]> {
         // Logic to interact with AI algorithms to generate interview questions
-        return new Promise((resolve) => {
+        return new promise((resolve) => {
             const questions = [
                 `What is your understanding of ${topic}?`,
                 `Can you explain a challenging aspect of ${topic}?`
